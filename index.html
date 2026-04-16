@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator Surat Lamaran Kerja - Custom Lampiran & PDF</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 968px) {
+            .container { grid-template-columns: 1fr; }
+        }
+        
+        .form-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            height: fit-content;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .preview-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            min-height: 800px;
+        }
+        
+        h1 { color: #333; margin-bottom: 25px; font-size: 1.8rem; font-weight: 700; }
+        
+        .form-group { margin-bottom: 20px; }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        input[type="text"], input[type="email"], input[type="tel"], textarea, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        textarea { resize: vertical; min-height: 80px; }
+        
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        @media (max-width: 500px) {
+            .row { grid-template-columns: 1fr; }
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary { background: #f0f0f0; color: #333; margin-top: 10px; }
+        .btn-secondary:hover { background: #e0e0e0; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+        }
+        
+        .btn-success:hover { box-shadow: 0 10px 30px rgba(46, 204, 113, 0.4); }
+        
+        /* Checkbox Lampiran Styles */
+        .lampiran-container {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        @media (max-width: 500px) {
+            .checkbox-grid { grid-template-columns: 1fr; }
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .checkbox-item:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+        
+        .checkbox-item label {
+            margin: 0;
+            cursor: pointer;
+            font-size: 0.9rem;
+            flex: 1;
+        }
+        
+        .checkbox-item.checked {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .custom-lampiran-input {
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .custom-lampiran-input.show { display: block; }
+        
+        /* Preview Styles */
+        .letter-container {
+            font-family: 'Crimson Text', serif;
+            color: #2c3e50;
+            line-height: 1.8;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .letter-header { margin-bottom: 30px; }
+        .sender-info { margin-bottom: 30px; }
+        .sender-info p { margin: 3px 0; }
+        .date-place { margin-bottom: 20px; }
+        .recipient-info { margin-bottom: 25px; }
+        
+        .subject-line {
+            font-weight: 600;
+            margin-bottom: 25px;
+            text-decoration: underline;
+        }
+        
+        .salutation { margin-bottom: 20px; }
+        
+        .letter-body {
+            text-align: justify;
+            margin-bottom: 20px;
+        }
+        
+        .letter-body p {
+            margin-bottom: 15px;
+            text-indent: 40px;
+        }
+        
+        .closing { margin-top: 30px; }
+        
+        .signature-space {
+            margin-top: 60px;
+            margin-bottom: 10px;
+        }
+        
+        .signature-line { text-decoration: underline; }
+        
+        .attachments {
+            margin-top: 30px;
+            font-size: 0.9rem;
+        }
+        
+        .template-selector { margin-bottom: 25px; }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .action-buttons .btn {
+            flex: 1;
+            min-width: 120px;
+            margin-top: 0;
+        }
+        
+        .section-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #667eea;
+            margin-bottom: 15px;
+            font-weight: 600;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .lampiran-count {
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+        
+        .select-all-btn {
+            font-size: 0.75rem;
+            color: #667eea;
+            cursor: pointer;
+            text-transform: none;
+            letter-spacing: normal;
+            font-weight: 500;
+        }
+        
+        .select-all-btn:hover { text-decoration: underline; }
+        
+        /* Loading overlay */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        
+        .loading-overlay.show { display: flex; }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            color: white;
+            margin-top: 20px;
+            font-size: 1.1rem;
+        }
+        
+        /* Template specific styles for PDF */
+        .template-formal { font-family: 'Crimson Text', serif; }
+        .template-freshgraduate { font-family: 'Crimson Text', serif; }
+        .template-berpengalaman { font-family: 'Crimson Text', serif; }
+        
+        .template-simple {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+        }
+        
+        .template-simple .letter-body p { text-indent: 0; }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="loading-text">Membuat PDF...</div>
+    </div>
+
+    <div class="container">
+        <div class="form-section">
+            <h1>📝 Generator Surat Lamaran</h1>
+            
+            <div class="template-selector">
+                <label>Template Surat</label>
+                <select id="template" onchange="updatePreview()">
+                    <option value="formal">📄 Formal Standar</option>
+                    <option value="freshgraduate">🎓 Fresh Graduate</option>
+                    <option value="berpengalaman">💼 Profesional Berpengalaman</option>
+                    <option value="simple">⚡ Simpel & Modern</option>
+                </select>
+            </div>
+            
+            <div class="section-title">Data Pribadi</div>
+            <div class="form-group">
+                <label>Nama Lengkap</label>
+                <input type="text" id="nama" placeholder="Contoh: Budi Santoso" oninput="updatePreview()">
+            </div>
+            
+            <div class="row">
+                <div class="form-group">
+                    <label>Tempat</label>
+                    <input type="text" id="tempat" placeholder="Jakarta" oninput="updatePreview()">
+                </div>
+                <div class="form-group">
+                    <label>Tanggal</label>
+                    <input type="text" id="tanggalInput" placeholder="16 April 2026" oninput="updatePreview()">
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="form-group">
+                    <label>No. Telepon</label>
+                    <input type="tel" id="telepon" placeholder="0812-3456-7890" oninput="updatePreview()">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email" placeholder="email@domain.com" oninput="updatePreview()">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Alamat Lengkap</label>
+                <textarea id="alamat" placeholder="Jl. Mawar No. 123, RT 01/RW 02, Kelurahan..." oninput="updatePreview()"></textarea>
+            </div>
+            
+            <div class="section-title">Data Perusahaan</div>
+            <div class="form-group">
+                <label>Nama Perusahaan</label>
+                <input type="text" id="perusahaan" placeholder="PT. Maju Jaya Indonesia" oninput="updatePreview()">
+            </div>
+            
+            <div class="form-group">
+                <label>Alamat Perusahaan</label>
+                <textarea id="alamatPerusahaan" placeholder="Jl. Sudirman No. 50, Jakarta Pusat..." oninput="updatePreview()"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Jabatan yang Dilamar</label>
+                <input type="text" id="jabatan" placeholder="Staff Marketing" oninput="updatePreview()">
+            </div>
+            
+            <div class="form-group">
+                <label>Sumber Informasi Lowongan</label>
+                <input type="text" id="sumber" placeholder="Website JobStreet / LinkedIn / Referensi teman..." oninput="updatePreview()">
+            </div>
+            
+            <div class="section-title">Informasi Tambahan</div>
+            <div class="form-group">
+                <label>Pendidikan Terakhir</label>
+                <input type="text" id="pendidikan" placeholder="S1 Manajemen - Universitas Indonesia" oninput="updatePreview()">
+            </div>
+            
+            <div class="form-group">
+                <label>Pengalaman Kerja (opsional)</label>
+                <textarea id="pengalaman" placeholder="2 tahun sebagai Staff Admin di PT. ABC..." oninput="updatePreview()"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Keahlian/Skill Utama</label>
+                <input type="text" id="skill" placeholder="Microsoft Office, Digital Marketing, dll" oninput="updatePreview()">
+            </div>
+            
+            <!-- Lampiran Custom Section -->
+            <div class="section-title">
+                <span>Pilih Lampiran <span class="lampiran-count" id="lampiranCount">0</span></span>
+                <span class="select-all-btn" onclick="toggleSelectAll()">Pilih Semua</span>
+            </div>
+            
+            <div class="lampiran-container">
+                <div class="checkbox-grid" id="lampiranGrid">
+                    <div class="checkbox-item" onclick="toggleCheckbox(this, 'cv')">
+                        <input type="checkbox" id="lampiran_cv" value="CV" onchange="updateLampiran()">
+                        <label for="lampiran_cv">📄 CV / Resume</label>
+                    </div>
+                    <div class="checkbox-item" onclick="toggleCheckbox(this, 'ijazah')">
+                        <input type="checkbox" id="lampiran_ijazah" value="Ijazah" onchange="updateLampiran()">
+                        <label for="lampiran_ijazah">🎓 Ijazah</label>
+                    </div>
+                    <div class="checkbox-item" onclick="toggleCheckbox(this, 'transkrip')">
+                        <input type="checkbox" id="lampiran_transkrip" value="Transkrip Nilai" onchange="updateLampiran()">
+                        <label for="lampiran_transkrip">📊 Transkrip Nilai</label>
+                    </div>
+                    <div class="checkbox-item" onclick="toggleCheckbox(this, 'ktp')">
+                        <input type="checkbox" id="lampiran_ktp" value="KTP" onchange="updateLampiran()">
+                        <label for="lampiran_ktp">🆔 KTP</label>
+                    </div>
+                    <div class="checkbox-item" onclick="toggleCheckbox(this, 'kk')">
+                        <input type="checkbox" id="lampiran_kk" value="Kartu Keluarga" onchange="updateLampiran()">
+                        <label for="lampiran_kk">👨‍👩‍👧‍👦 Kartu Keluarga</label>
+                    </div>
+                    <div class="checkbox-item" onclick="toggleCheckbox(this, 'pasfoto')">
+                        <input type="checkbox" id="lampiran_pasfoto" value="Pas Foto 4x6" onchange="updateLampiran()">
+                        <label for="lampiran_pasfoto">📷 Pas Foto 4x6</label>
+                    </div>
+                    <div class="checkbox-item" onclick="toggleCheckbox(this, 'skck')">
+                        <input type="checkbox" id="lampiran_skck" value="SKCK" onchange="updateLampiran()">
+                        <label for="lampiran_skck">📋 SKCK</label>
+                    </div>
+                    <div class="checkbox-item" onclick="toggleCheckbox(this, 'sertifikat')">
+                        <input type="checkbox" id="lampiran_sertifikat" value="Sertifikat" onchange="updateLampiran()">
+                        <label for="lampiran_sertifikat">🏆 Sertifikat</label>
+                    </div>
+                    <div class="checkbox-item" onclick="toggleCheckbox(this, 'suratpengalaman')">
+                        <input type="checkbox" id="lampiran_suratpengalaman" value="Surat Pengalaman Kerja" onchange="updateLampiran()">
+                        <label for="lampiran_suratpengalaman">💼 Surat Pengalaman</label>
+                    </div>
+                    <div class="checkbox-item" onclick="toggleCheckbox(this, 'npwp')">
+                        <input type="checkbox" id="lampiran_npwp" value="NPWP" onchange="updateLampiran()">
+                        <label for="lampiran_npwp">💳 NPWP</label>
+                    </div>
+                    <div class="checkbox-item" onclick="toggleCheckbox(this, 'bpjs')">
+                        <input type="checkbox" id="lampiran_bpjs" value="BPJS" onchange="updateLampiran()">
+                        <label for="lampiran_bpjs">🏥 BPJS</label>
+                    </div>
+                    <div class="checkbox-item" onclick="toggleCheckbox(this, 'custom')">
+                        <input type="checkbox" id="lampiran_custom_check" onchange="toggleCustomInput()">
+                        <label for="lampiran_custom_check">✏️ Lainnya...</label>
+                    </div>
+                </div>
+                
+                <div class="custom-lampiran-input" id="customLampiranInput">
+                    <input type="text" id="lampiran_custom" placeholder="Masukkan lampiran lain (pisah dengan koma)" oninput="updateLampiran()">
+                </div>
+            </div>
+            
+            <button class="btn" onclick="generateLetter()">✨ Generate Surat</button>
+            <button class="btn btn-secondary" onclick="resetForm()">🔄 Reset Form</button>
+        </div>
+        
+        <div class="preview-section">
+            <div class="action-buttons">
+                <button class="btn btn-success" onclick="downloadPDF()">📥 Download PDF</button>
+                <button class="btn btn-secondary" onclick="copyToClipboard()">📋 Copy Text</button>
+                <button class="btn btn-secondary" onclick="window.print()">🖨️ Print</button>
+            </div>
+            
+            <div id="letterPreview" class="letter-container template-formal">
+                <div class="letter-header">
+                    <div class="sender-info">
+                        <p><strong id="previewNama">[Nama Lengkap]</strong></p>
+                        <p id="previewAlamat">[Alamat Lengkap]</p>
+                        <p>Telepon: <span id="previewTelepon">[Nomor Telepon]</span> | Email: <span id="previewEmail">[Email]</span></p>
+                    </div>
+                    
+                    <div class="date-place">
+                        <p id="previewTanggal">[Tempat], [Tanggal]</p>
+                    </div>
+                    
+                    <div class="recipient-info">
+                        <p>Yth. HRD / Personalia</p>
+                        <p id="previewPerusahaan"><strong>[Nama Perusahaan]</strong></p>
+                        <p id="previewAlamatPerusahaan">[Alamat Perusahaan]</p>
+                    </div>
+                    
+                    <div class="subject-line">
+                        <p>Perihal: Lamaran Pekerjaan</p>
+                    </div>
+                </div>
+                
+                <div class="salutation">
+                    <p>Dengan hormat,</p>
+                </div>
+                
+                <div class="letter-body" id="letterBody">
+                    <p>Berdasarkan informasi lowongan pekerjaan yang saya peroleh dari <span id="previewSumber">[Sumber]</span>, saya bermaksud mengajukan lamaran untuk posisi <strong id="previewJabatan">[Jabatan]</strong> di <span id="previewPerusahaan2">[Perusahaan]</span>.</p>
+                    
+                    <p>Saya lulusan <span id="previewPendidikan">[Pendidikan]</span> dengan pengalaman <span id="previewPengalaman">[Pengalaman]</span>. Saya memiliki keahlian dalam bidang <span id="previewSkill">[Skill]</span> dan yakin dapat berkontribusi positif bagi perusahaan.</p>
+                    
+                    <p>Sebagai bahan pertimbangan, saya lampirkan dokumen-dokumen pendukung. Besar harapan saya untuk diberikan kesempatan wawancara agar dapat menjelaskan kemampuan saya lebih lanjut.</p>
+                    
+                    <p>Atas perhatian dan kesempatan yang diberikan, saya ucapkan terima kasih.</p>
+                </div>
+                
+                <div class="closing">
+                    <p>Hormat saya,</p>
+                    <div class="signature-space">
+                        <p class="signature-line" id="previewNamaTtd">[Nama Lengkap]</p>
+                    </div>
+                </div>
+                
+                <div class="attachments">
+                    <p><strong>Lampiran:</strong></p>
+                    <div id="previewLampiran">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const templates = {
+            formal: {
+                class: 'template-formal',
+                body: `<p>Berdasarkan informasi lowongan pekerjaan yang saya peroleh dari <span id="previewSumber">[Sumber]</span>, saya bermaksud mengajukan lamaran untuk posisi <strong id="previewJabatan">[Jabatan]</strong> di <span id="previewPerusahaan2">[Perusahaan]</span>.</p>
+                    
+                    <p>Saya lulusan <span id="previewPendidikan">[Pendidikan]</span> dengan pengalaman <span id="previewPengalaman">[Pengalaman]</span>. Saya memiliki keahlian dalam bidang <span id="previewSkill">[Skill]</span> dan yakin dapat berkontribusi positif bagi perusahaan.</p>
+                    
+                    <p>Sebagai bahan pertimbangan, saya lampirkan dokumen-dokumen pendukung. Besar harapan saya untuk diberikan kesempatan wawancara agar dapat menjelaskan kemampuan saya lebih lanjut.</p>
+                    
+                    <p>Atas perhatian dan kesempatan yang diberikan, saya ucapkan terima kasih.</p>`
+            },
+            freshgraduate: {
+                class: 'template-freshgraduate',
+                body: `<p>Melalui surat ini, saya <strong id="previewNama2">[Nama]</strong> bermaksud mengajukan lamaran pekerjaan untuk posisi <strong id="previewJabatan">[Jabatan]</strong> di <span id="previewPerusahaan2">[Perusahaan]</span> yang informasinya saya dapatkan dari <span id="previewSumber">[Sumber]</span>.</p>
+                    
+                    <p>Saya adalah fresh graduate lulusan <span id="previewPendidikan">[Pendidikan]</span>. Selama masa studi, saya aktif dalam organisasi dan memiliki IPK yang memuaskan. Saya memiliki semangat tinggi untuk belajar dan berkembang dalam bidang <span id="previewSkill">[Skill]</span>.</p>
+                    
+                    <p>Meskipun belum memiliki pengalaman kerja formal, saya yakin kemampuan dan dedikasi saya dapat memberikan kontribusi terbaik bagi perusahaan. Saya sangat antusias untuk memulai karir profesional saya di <span id="previewPerusahaan3">[Perusahaan]</span>.</p>
+                    
+                    <p>Bersama surat ini, saya lampirkan dokumen-dokumen pendukung. Saya berharap dapat diberikan kesempatan wawancara untuk menjelaskan potensi saya lebih lanjut.</p>
+                    
+                    <p>Atas waktu dan pertimbangan Bapak/Ibu, saya ucapkan terima kasih.</p>`
+            },
+            berpengalaman: {
+                class: 'template-berpengalaman',
+                body: `<p>Dengan surat ini, saya sampaikan ketertarikan saya untuk bergabung dengan <span id="previewPerusahaan2">[Perusahaan]</span> sebagai <strong id="previewJabatan">[Jabatan]</strong>, sesuai dengan informasi lowongan dari <span id="previewSumber">[Sumber]</span>.</p>
+                    
+                    <p>Saya adalah profesional dengan latar belakang pendidikan <span id="previewPendidikan">[Pendidikan]</span> dan memiliki pengalaman kerja <span id="previewPengalaman">[Pengalaman]</span>. Track record saya menunjukkan kemampuan dalam <span id="previewSkill">[Skill]</span> dengan hasil kerja yang terukur.</p>
+                    
+                    <p>Saya yakin pengalaman dan keahlian saya dapat memberikan nilai tambah signifikan bagi tim di <span id="previewPerusahaan3">[Perusahaan]</span>. Saya siap untuk berkontribusi segera dan beradaptasi dengan kultur perusahaan.</p>
+                    
+                    <p>Dokumen lengkap terlampir. Saya tersedia untuk wawancara kapan saja sesuai jadwal yang Bapak/Ibu tentukan.</p>
+                    
+                    <p>Atas perhatiannya, saya ucapkan terima kasih.</p>`
+            },
+            simple: {
+                class: 'template-simple',
+                body: `<p>Saya tertarik melamar posisi <strong id="previewJabatan">[Jabatan]</strong> di <span id="previewPerusahaan2">[Perusahaan]</span> berdasarkan informasi dari <span id="previewSumber">[Sumber]</span>.</p>
+                    
+                    <p>Lulusan <span id="previewPendidikan">[Pendidikan]</span> dengan pengalaman <span id="previewPengalaman">[Pengalaman]</span>. Ahli dalam <span id="previewSkill">[Skill]</span>.</p>
+                    
+                    <p>Saya siap berkontribusi dan berkembang bersama perusahaan. Lampiran lengkap terlampir.</p>
+                    
+                    <p>Terima kasih atas kesempatannya.</p>`
+            }
+        };
+
+        function toggleCheckbox(element, id) {
+            const checkbox = element.querySelector('input[type="checkbox"]');
+            if (id !== 'custom') {
+                checkbox.checked = !checkbox.checked;
+            }
+            element.classList.toggle('checked', checkbox.checked);
+            if (id !== 'custom') {
+                updateLampiran();
+            }
+        }
+
+        function toggleCustomInput() {
+            const checkbox = document.getElementById('lampiran_custom_check');
+            const input = document.getElementById('customLampiranInput');
+            const item = checkbox.closest('.checkbox-item');
+            
+            item.classList.toggle('checked', checkbox.checked);
+            input.classList.toggle('show', checkbox.checked);
+            updateLampiran();
+        }
+
+        function toggleSelectAll() {
+            const checkboxes = document.querySelectorAll('#lampiranGrid input[type="checkbox"]:not(#lampiran_custom_check)');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = !allChecked;
+                checkbox.closest('.checkbox-item').classList.toggle('checked', !allChecked);
+            });
+            
+            updateLampiran();
+        }
+
+        function updateLampiran() {
+            const checkboxes = document.querySelectorAll('#lampiranGrid input[type="checkbox"]:checked:not(#lampiran_custom_check)');
+            const customInput = document.getElementById('lampiran_custom').value;
+            
+            let lampiranList = [];
+            
+            checkboxes.forEach(cb => {
+                if (cb.value) lampiranList.push(cb.value);
+            });
+            
+            if (document.getElementById('lampiran_custom_check').checked && customInput.trim()) {
+                customInput.split(',').forEach(item => {
+                    if (item.trim()) lampiranList.push(item.trim());
+                });
+            }
+            
+            // Update count
+            document.getElementById('lampiranCount').textContent = lampiranList.length;
+            
+            // Update preview
+            const previewDiv = document.getElementById('previewLampiran');
+            if (lampiranList.length === 0) {
+                previewDiv.innerHTML = '-';
+            } else {
+                previewDiv.innerHTML = lampiranList.map((item, index) => `${index + 1}. ${item}`).join('<br>');
+            }
+            
+            return lampiranList;
+        }
+
+        function updatePreview() {
+            const nama = document.getElementById('nama').value || '[Nama Lengkap]';
+            const alamat = document.getElementById('alamat').value || '[Alamat Lengkap]';
+            const telepon = document.getElementById('telepon').value || '[Nomor Telepon]';
+            const email = document.getElementById('email').value || '[Email]';
+            const perusahaan = document.getElementById('perusahaan').value || '[Nama Perusahaan]';
+            const alamatPerusahaan = document.getElementById('alamatPerusahaan').value || '[Alamat Perusahaan]';
+            const jabatan = document.getElementById('jabatan').value || '[Jabatan]';
+            const sumber = document.getElementById('sumber').value || '[Sumber Informasi]';
+            const pendidikan = document.getElementById('pendidikan').value || '[Pendidikan Terakhir]';
+            const pengalaman = document.getElementById('pengalaman').value || '[Pengalaman Kerja]';
+            const skill = document.getElementById('skill').value || '[Keahlian]';
+            
+            // Update preview elements
+            document.getElementById('previewNama').textContent = nama;
+            document.getElementById('previewAlamat').textContent = alamat;
+            document.getElementById('previewTelepon').textContent = telepon;
+            document.getElementById('previewEmail').textContent = email;
+            document.getElementById('previewPerusahaan').textContent = perusahaan;
+            document.getElementById('previewAlamatPerusahaan').textContent = alamatPerusahaan;
+            document.getElementById('previewJabatan').textContent = jabatan;
+            document.getElementById('previewSumber').textContent = sumber;
+            document.getElementById('previewPendidikan').textContent = pendidikan;
+            document.getElementById('previewPengalaman').textContent = pengalaman || 'yang relevan';
+            document.getElementById('previewSkill').textContent = skill;
+            document.getElementById('previewNamaTtd').textContent = nama;
+            
+            // Update date
+            const tempat = document.getElementById('tempat').value || 'Jakarta';
+            const tanggalInput = document.getElementById('tanggalInput').value;
+            
+            if (tanggalInput) {
+                document.getElementById('previewTanggal').textContent = tempat + ', ' + tanggalInput;
+            } else {
+                const now = new Date();
+                const options = { day: 'numeric', month: 'long', year: 'numeric' };
+                document.getElementById('previewTanggal').textContent = tempat + ', ' + now.toLocaleDateString('id-ID', options);
+            }
+            
+            // Update template
+            const templateKey = document.getElementById('template').value;
+            const template = templates[templateKey];
+            
+            const letterContainer = document.getElementById('letterPreview');
+            letterContainer.className = 'letter-container ' + template.class;
+            
+            document.getElementById('letterBody').innerHTML = template.body;
+            
+            // Re-apply values after template change
+            document.getElementById('previewJabatan').textContent = jabatan;
+            document.getElementById('previewPerusahaan2').textContent = perusahaan;
+            const p3 = document.getElementById('previewPerusahaan3');
+            if(p3) p3.textContent = perusahaan;
+            document.getElementById('previewSumber').textContent = sumber;
+            document.getElementById('previewPendidikan').textContent = pendidikan;
+            document.getElementById('previewPengalaman').textContent = pengalaman || 'yang relevan';
+            document.getElementById('previewSkill').textContent = skill;
+            const nama2 = document.getElementById('previewNama2');
+            if(nama2) nama2.textContent = nama;
+            
+            updateLampiran();
+        }
+        
+        function generateLetter() {
+            updatePreview();
+            document.querySelector('.preview-section').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function resetForm() {
+            const inputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"], textarea');
+            inputs.forEach(input => input.value = '');
+            
+            const checkboxes = document.querySelectorAll('#lampiranGrid input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+                checkbox.closest('.checkbox-item').classList.remove('checked');
+            });
+            
+            document.getElementById('customLampiranInput').classList.remove('show');
+            document.getElementById('lampiranCount').textContent = '0';
+            
+            updatePreview();
+        }
+        
+        function downloadPDF() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.classList.add('show');
+            
+            const element = document.getElementById('letterPreview');
+            const templateKey = document.getElementById('template').value;
+            const nama = document.getElementById('nama').value || 'Surat_Lamaran';
+            const perusahaan = document.getElementById('perusahaan').value || 'Perusahaan';
+            
+            const opt = {
+                margin: [15, 15, 15, 15],
+                filename: `Surat_Lamaran_${nama.replace(/\s+/g, '_')}_${perusahaan.replace(/\s+/g, '_')}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { 
+                    scale: 2,
+                    useCORS: true,
+                    letterRendering: true
+                },
+                jsPDF: { 
+                    unit: 'mm', 
+                    format: 'a4', 
+                    orientation: 'portrait'
+                },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            };
+            
+            html2pdf().set(opt).from(element).save().then(() => {
+                loadingOverlay.classList.remove('show');
+            }).catch(err => {
+                console.error('Error generating PDF:', err);
+                loadingOverlay.classList.remove('show');
+                alert('Terjadi kesalahan saat membuat PDF. Silakan coba lagi.');
+            });
+        }
+        
+        function copyToClipboard() {
+            const letterText = document.getElementById('letterPreview').innerText;
+            navigator.clipboard.writeText(letterText).then(() => {
+                alert('Surat lamaran berhasil disalin ke clipboard!');
+            }).catch(err => {
+                console.error('Gagal menyalin:', err);
+                alert('Gagal menyalin teks. Silakan coba lagi.');
+            });
+        }
+        
+        // Initialize
+        updatePreview();
+    </script>
+</body>
+</html>
